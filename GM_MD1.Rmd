@@ -8,8 +8,7 @@ output:
 
 # Title level 1
 
-This is the second day of the carpentry workshop.
-heres another edit 
+Final copy
 
 ## Title level 2
 
