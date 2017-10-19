@@ -1,0 +1,43 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    toc: yes
+    toc_float: true 
+---
+
+#Title level 1
+##Title level 2
+
+*italics*
+**bold**
+
+Load packages
+```{r}
+library(tidyverse)
+library(plotly)
+```
+
+
+I downloaded the file and loaded it into R
+```{r}
+download.file("https://raw.githubusercontent.com/swcarpentry/r-novice-gapminder/gh-pages/_episodes_rmd/data/gapminder-FiveYearData.csv", destfile = "data/gapminder-FiveYearData.csv")
+
+gapminder <- read.csv("data/gapminder-FiveYearData.csv")
+
+head(gapminder)
+```
+
+
+I wonder, what is the life expectancy over the years 
+```{r}
+p <- ggplot(data = gapminder, aes(x=year, y=lifeExp)) + geom_point()
+
+p
+```
+
+Let's see the interactive version 
+```{r}
+ggplotly(p)
+```
+

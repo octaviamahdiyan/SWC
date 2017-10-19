@@ -1,0 +1,169 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    toc: yes
+    toc_float: true
+---
+
+# Title level 1
+
+## Title level 2
+
+**bold**
+
+*italics*
+
+Load packages
+```{r}
+library(tidyverse)
+library(plotly)
+source("functions.R")
+```
+
+
+
+I downloaded the file and loaded it into R
+```{r}
+download.file("https://raw.githubusercontent.com/swcarpentry/r-novice-gapminder/gh-pages/_episodes_rmd/data/gapminder-FiveYearData.csv", destfile = "data/gapminder-FiveYearData.csv")
+
+gapminder <- read.csv("data/gapminder-FiveYearData.csv")
+
+head(gapminder)
+```
+
+I wonder if rstats increases life expectancy over the years
+
+
+```{r}
+p <- ggplot(data=gapminder,aes(x=year,y=lifeExp)) +
+    geom_point()
+
+p
+```
+
+Let's see the interactive version
+
+```{r}
+ggplotly(p)
+```
+
+# Making your own functions
+
+If you are repeating yourself in your code, you may be able to solve that problem by making your own function!
+
+```{r}
+se <- function(x){
+  sd(x)/sqrt(length(x))
+}
+
+cars <- c(3,4,5,6,7,10)
+
+se(cars)
+
+```
+
+
+# Data manipulation with `dplyr`
+
+You will likely want to get subsections of your dataframe and/or calculate means of a variable for a certain subsection, `dplyr` is your friend!
+
+Explored select
+
+```{r}
+gapminder <- read.csv("data/gapminder-FiveYearData.csv")
+
+year_country_gdp <- select(gapminder,year,country,gdpPercap)
+year_country_gdp <- select(gapminder,-pop, -continent, -lifeExp)
+names(year_country_gdp)
+```
+
+Explore filter
+Pike (%>%) = first argument of the function (shortcut: control shift m)
+
+```{r}
+year_country_gdp_euro <- gapminder %>%
+  filter(continent=="Europe") %>%
+  select(year,country,gdpPercap)
+```
+
+Exploring the amazing group_by and summarize functions 
+
+```{r}
+mean_gdp_percountry <- gapminder %>%
+  group_by(country) %>% 
+  summarise(mean_gdp=mean(gdpPercap),
+            se_gdp=se(gdpPercap))
+
+mean_gdp_percountry
+```
+
+Challenge: I want the mean, se and sample size of life expectancy by continent 
+n() = easier way to find "sample size" instead of length (exists only within summarise or another fnx)
+you can group_by multiple variables (just by adding a comma)
+
+```{r}
+mean_lifeExp_percontinent <- gapminder %>%
+  group_by(continent,country) %>% 
+  summarise(mean_lifeExp=mean(lifeExp),
+            se_lifeExp=se(lifeExp),
+            length_lifeExp=n())
+
+mean_lifeExp_percontinent
+```
+
+combining ggplot and dplyr
+easy tools to save = ggsave and write.cvs ("/" denotes what folder you put it in - don't put it in your "data" folder because there is a risk of over ridding your original data)
+
+```{r}
+euro_countries <- gapminder %>%
+  filter(continent=="Europe") %>% 
+  ggplot(aes(x=year,y=lifeExp,color=country)) +
+  geom_line() +
+  facet_wrap(~country)
+
+euro_countries
+ggsave("euro.png")
+write.csv(mean_gdp_percountry, "processed/mean_gdp_percountry.cvs")
+```
+
+# Data manipulation with `tidyr`
+make sure you use the right data frame (gapminder_wide vs. gapmidner_long)
+
+a longer way to code this data...
+gap_long <- gapminder_wide %>% 
+  gather(obstype_year,
+  obs_values,
+  starts_with('pop'), 
+  starts_with('lifeExp'),
+  starts_with('gdpPercap')
+)
+
+```{r}
+# command to download the 'wide' data
+download.file("https://raw.githubusercontent.com/swcarpentry/r-novice-gapminder/gh-pages/data/gapminder_wide.csv", destfile = "data/gapminder_wide.csv")
+              
+gapminder_wide <- read.csv("data/gapminder_wide.csv")
+
+gap_long <- gapminder_wide %>% 
+  gather(obstype_year,
+         obs_values,
+         3:38)
+
+head(gap_long)
+```
+
+seperate the obs_type column
+
+```{r}
+gap_normal <- gap_long %>% 
+  separate(obstype_year,into=c("obs_type", "obs_year"
+),sep="_") %>% 
+  spread(obs_type,obs_values)
+
+head(gap_normal)
+
+all.equal(gapminder,gap_normal)
+```
+
+R likes to have 'long' format data where every row is an observation and you have a single column for 'observations' the others serve to identify that observation. (exceptions apply when you have multiple types of observations) To switch back and forth from 'wide' (how we typically enter data in a spreadsheet) to 'long' use `tidyr`
