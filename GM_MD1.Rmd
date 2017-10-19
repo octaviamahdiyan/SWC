@@ -8,6 +8,8 @@ output:
 
 # Title level 1
 
+This is the second day of the carpentry workshop.
+
 ## Title level 2
 
 **bold**
